@@ -21,8 +21,9 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return;
   }
 
-  if (isBodyParserError(err)) {
-    res.status(400).json({ error: { code: 'invalid_json', message: 'Malformed JSON body' } });
+  const parserError = BODY_PARSER_ERRORS.get(bodyParserErrorType(err));
+  if (parserError) {
+    res.status(parserError.status).json({ error: parserError.error });
     return;
   }
 
@@ -30,11 +31,21 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   res.status(500).json({ error: { code: 'internal_error', message: 'Something went wrong' } });
 };
 
-function isBodyParserError(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'type' in err &&
-    (err as { type: unknown }).type === 'entity.parse.failed'
-  );
+const BODY_PARSER_ERRORS = new Map<string, { status: number } & ErrorBody>([
+  [
+    'entity.parse.failed',
+    { status: 400, error: { code: 'invalid_json', message: 'Malformed JSON body' } },
+  ],
+  [
+    'entity.too.large',
+    { status: 413, error: { code: 'payload_too_large', message: 'Request body is too large' } },
+  ],
+]);
+
+function bodyParserErrorType(err: unknown): string {
+  if (typeof err === 'object' && err !== null && 'type' in err) {
+    const { type } = err as { type: unknown };
+    if (typeof type === 'string') return type;
+  }
+  return '';
 }

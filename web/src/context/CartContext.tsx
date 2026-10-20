@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import { api } from '../api/client';
 import type { Cart, Order, ShippingAddress } from '../api/types';
@@ -9,6 +17,8 @@ const EMPTY_CART: Cart = { lines: [], subtotal: 0, discount: 0, shipping: 0, tot
 interface CartState {
   cart: Cart;
   itemCount: number;
+  /** True until the signed-in user's cart has loaded. Edits are disabled meanwhile. */
+  loading: boolean;
   /** Short status message announced to screen readers via an aria-live region. */
   status: string;
   error: string | null;
@@ -20,23 +30,59 @@ interface CartState {
 
 const CartContext = createContext<CartState | null>(null);
 
+function countItems(cart: Cart): number {
+  return cart.lines.reduce((n, line) => n + line.quantity, 0);
+}
+
+function describeCount(cart: Cart): string {
+  const count = countItems(cart);
+  return `${count} ${count === 1 ? 'item' : 'items'} in your cart.`;
+}
+
+/** Cart state is scoped to the signed-in session: it resets whenever the token changes. */
 export function CartProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth();
-  const [serverCart, setCart] = useState<Cart>(EMPTY_CART);
+  return (
+    <SessionCartProvider key={token ?? 'signed-out'} token={token}>
+      {children}
+    </SessionCartProvider>
+  );
+}
+
+function SessionCartProvider({ token, children }: { token: string | null; children: ReactNode }) {
+  const [cart, setCart] = useState<Cart>(EMPTY_CART);
+  const [loading, setLoading] = useState(Boolean(token));
   const [status, setStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const cart = token ? serverCart : EMPTY_CART;
+  // Only the most recently issued request may update the cart, so slow responses
+  // can never overwrite newer state.
+  const latestRequest = useRef(0);
+
+  const apply = useCallback(async (request: Promise<Cart>, message: (cart: Cart) => string) => {
+    const id = ++latestRequest.current;
+    setError(null);
+    try {
+      const next = await request;
+      if (id !== latestRequest.current) return;
+      setCart(next);
+      setStatus(message(next));
+    } catch (err) {
+      if (id === latestRequest.current) setError((err as Error).message);
+    }
+  }, []);
 
   useEffect(() => {
     if (!token) return;
-    let cancelled = false;
-    api.getCart(token).then(
-      (fetched) => !cancelled && setCart(fetched),
-      (err: Error) => !cancelled && setError(err.message),
-    );
-    return () => {
-      cancelled = true;
-    };
+    const id = ++latestRequest.current;
+    api
+      .getCart(token)
+      .then((next) => {
+        if (id === latestRequest.current) setCart(next);
+      })
+      .catch((err: Error) => {
+        if (id === latestRequest.current) setError(err.message);
+      })
+      .finally(() => setLoading(false));
   }, [token]);
 
   const run = useCallback(
@@ -45,15 +91,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setError('Please sign in first.');
         return;
       }
-      setError(null);
-      try {
-        setCart(await action(token));
-        setStatus(message);
-      } catch (err) {
-        setError((err as Error).message);
-      }
+      await apply(action(token), (next) => `${message} ${describeCount(next)}`);
     },
-    [token],
+    [token, apply],
   );
 
   const addItem = useCallback(
@@ -77,8 +117,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     async (address: ShippingAddress, promoCode?: string) => {
       if (!token) throw new Error('Please sign in first.');
       const order = await api.checkout(token, address, promoCode);
+      latestRequest.current++;
       setCart(EMPTY_CART);
-      setStatus('Order placed!');
+      setStatus(`Order placed! ${describeCount(EMPTY_CART)}`);
       return order;
     },
     [token],
@@ -87,7 +128,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       cart,
-      itemCount: cart.lines.reduce((n, line) => n + line.quantity, 0),
+      itemCount: countItems(cart),
+      loading,
       status,
       error,
       addItem,
@@ -95,7 +137,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem,
       checkout,
     }),
-    [cart, status, error, addItem, updateQuantity, removeItem, checkout],
+    [cart, loading, status, error, addItem, updateQuantity, removeItem, checkout],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

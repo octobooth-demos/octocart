@@ -28,14 +28,27 @@ export function CheckoutForm() {
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
 
-  if (order) {
+  if (order && cart.lines.length === 0) {
     return (
       <section aria-labelledby="confirmation-heading" className="confirmation">
         <h2 id="confirmation-heading">Thanks for your order! 🎉</h2>
         <p>
-          Order <code>{order.id.slice(0, 8)}</code> totaling {formatMoney(order.total)} is on its
-          way to {order.shippingAddress.city}.
+          Order <code>{order.id.slice(0, 8)}</code> is on its way to {order.shippingAddress.city}.
         </p>
+        <dl className="totals">
+          <dt>Subtotal</dt>
+          <dd>{formatMoney(order.subtotal)}</dd>
+          {order.discount > 0 && (
+            <>
+              <dt>Discount ({order.promoCode})</dt>
+              <dd>−{formatMoney(order.discount)}</dd>
+            </>
+          )}
+          <dt>Shipping</dt>
+          <dd>{order.shipping === 0 ? 'Free' : formatMoney(order.shipping)}</dd>
+          <dt>Total charged</dt>
+          <dd>{formatMoney(order.total)}</dd>
+        </dl>
       </section>
     );
   }
@@ -80,9 +93,13 @@ export function CheckoutForm() {
           <input
             id="promo-code"
             name="promoCode"
+            aria-describedby="promo-hint"
             value={promoCode}
             onChange={(e) => setPromoCode(e.target.value)}
           />
+          <p id="promo-hint" className="hint">
+            Discounts and shipping are recalculated when you place your order.
+          </p>
         </div>
         {error && (
           <p role="alert" className="error">
@@ -90,7 +107,7 @@ export function CheckoutForm() {
           </p>
         )}
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Placing order…' : `Place order · ${formatMoney(cart.total)}`}
+          {submitting ? 'Placing order…' : 'Place order'}
         </button>
       </form>
     </section>

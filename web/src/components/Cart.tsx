@@ -2,7 +2,16 @@ import { useCart } from '../context/CartContext';
 import { formatMoney } from '../lib/money';
 
 export function Cart() {
-  const { cart, updateQuantity, removeItem } = useCart();
+  const { cart, loading, updateQuantity, removeItem } = useCart();
+
+  if (loading) {
+    return (
+      <section aria-labelledby="cart-heading">
+        <h2 id="cart-heading">Your cart</h2>
+        <p aria-busy="true">Loading your cart…</p>
+      </section>
+    );
+  }
 
   if (cart.lines.length === 0) {
     return (

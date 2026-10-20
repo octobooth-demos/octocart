@@ -12,9 +12,21 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+interface Session {
+  token: string;
+  user: User;
+}
+
+export function AuthProvider({
+  children,
+  initialSession,
+}: {
+  children: ReactNode;
+  /** Lets tests start signed in. The app always starts signed out. */
+  initialSession?: Session;
+}) {
+  const [token, setToken] = useState<string | null>(initialSession?.token ?? null);
+  const [user, setUser] = useState<User | null>(initialSession?.user ?? null);
 
   const login = useCallback(async (email: string, password: string) => {
     const session = await api.login(email, password);

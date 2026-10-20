@@ -39,6 +39,20 @@ describe('products routes', () => {
 });
 
 describe('app', () => {
+  it('GET /api/health reports ok', async () => {
+    const res = await request(testApp()).get('/api/health');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: 'ok' });
+  });
+
+  it('returns 413 for oversized JSON bodies', async () => {
+    const res = await request(testApp())
+      .post('/api/auth/login')
+      .send({ email: 'mona@octocart.dev', password: 'x'.repeat(200_000) });
+    expect(res.status).toBe(413);
+    expect(res.body.error.code).toBe('payload_too_large');
+  });
+
   it('returns 404 JSON for unknown routes', async () => {
     const res = await request(testApp()).get('/api/nope');
     expect(res.status).toBe(404);

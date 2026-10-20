@@ -54,7 +54,7 @@ button {
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--success);
-  color: #fff;
+  color: var(--bg);
   cursor: pointer;
 }
 
@@ -98,7 +98,7 @@ a {
   padding: 0 0.4em;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--bg);
   text-align: center;
 }
 

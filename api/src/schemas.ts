@@ -15,7 +15,8 @@ export const LoginBody = z.object({
 });
 export type LoginBody = z.infer<typeof LoginBody>;
 
-const Quantity = z.number().int().min(1).max(10);
+export const MAX_QUANTITY = 10;
+const Quantity = z.number().int().min(1).max(MAX_QUANTITY);
 
 export const AddCartItemBody = z.object({
   productId: z.string().min(1).max(100),

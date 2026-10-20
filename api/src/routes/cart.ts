@@ -2,11 +2,11 @@ import { Router } from 'express';
 import { store } from '../data/store.js';
 import type { CartItem, Product } from '../data/types.js';
 import { asyncHandler } from '../lib/asyncHandler.js';
-import { ConflictError, NotFoundError } from '../lib/errors.js';
+import { ConflictError, HttpError, NotFoundError } from '../lib/errors.js';
 import { buildLines, calculateTotals } from '../lib/pricing.js';
 import { validate } from '../lib/validate.js';
 import { currentUser, requireAuth } from '../middleware/requireAuth.js';
-import { AddCartItemBody, CartItemParams, UpdateCartItemBody } from '../schemas.js';
+import { AddCartItemBody, CartItemParams, MAX_QUANTITY, UpdateCartItemBody } from '../schemas.js';
 
 export const cartRouter = Router();
 
@@ -48,6 +48,13 @@ cartRouter.post(
     const items = [...(await store.getCart(userId))];
     const existing = items.find((item) => item.productId === productId);
     const newQuantity = (existing?.quantity ?? 0) + quantity;
+    if (newQuantity > MAX_QUANTITY) {
+      throw new HttpError(
+        400,
+        'quantity_limit',
+        `You can have at most ${MAX_QUANTITY} of each item in your cart`,
+      );
+    }
 
     await requireStock(productId, newQuantity);
 

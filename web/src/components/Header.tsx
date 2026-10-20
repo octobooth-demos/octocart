@@ -16,7 +16,7 @@ export function Header() {
           <span>Hi, {user.name}!</span>
           <a href="#cart" className="cart-link">
             Cart <span className="badge">{itemCount}</span>
-            <span className="visually-hidden"> items</span>
+            <span className="visually-hidden"> {itemCount === 1 ? 'item' : 'items'}</span>
           </a>
           <button type="button" onClick={() => void logout()}>
             Sign out

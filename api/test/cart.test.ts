@@ -46,6 +46,21 @@ describe('cart routes', () => {
     expect(res.body.error.code).toBe('validation_error');
   });
 
+  it('enforces the per-item limit across repeated additions', async () => {
+    const add = (quantity: number) =>
+      request(app)
+        .post('/api/cart/items')
+        .set(auth)
+        .send({ productId: 'mona-sticker-pack', quantity });
+    expect((await add(10)).status).toBe(201);
+    const res = await add(1);
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('quantity_limit');
+
+    const cart = await request(app).get('/api/cart').set(auth);
+    expect(cart.body.cart.lines[0].quantity).toBe(10);
+  });
+
   it('returns 404 for unknown products', async () => {
     const res = await request(app).post('/api/cart/items').set(auth).send({ productId: 'nope' });
     expect(res.status).toBe(404);
@@ -84,6 +99,12 @@ describe('cart routes', () => {
     const res = await request(app).delete('/api/cart/items/octocat-hoodie').set(auth);
     expect(res.status).toBe(200);
     expect(res.body.cart.lines).toEqual([]);
+  });
+
+  it('DELETE returns 404 for items not in the cart', async () => {
+    const res = await request(app).delete('/api/cart/items/octocat-hoodie').set(auth);
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('not_found');
   });
 
   it('keeps carts separate per user', async () => {

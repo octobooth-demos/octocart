@@ -22,6 +22,12 @@ describe('orders routes', () => {
     expect(res.status).toBe(401);
   });
 
+  it('GET /api/orders requires authentication', async () => {
+    const res = await request(app).get('/api/orders');
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('unauthorized');
+  });
+
   it('POST /api/orders checks out the cart', async () => {
     await addToCart('octocat-hoodie');
     await addToCart('mona-sticker-pack', 2);

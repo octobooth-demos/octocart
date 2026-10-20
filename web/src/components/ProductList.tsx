@@ -7,7 +7,7 @@ import { ProductCard } from './ProductCard';
 
 export function ProductList() {
   const { token } = useAuth();
-  const { addItem } = useCart();
+  const { addItem, loading } = useCart();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +27,7 @@ export function ProductList() {
           <ProductCard
             key={product.id}
             product={product}
-            canAdd={Boolean(token)}
+            canAdd={Boolean(token) && !loading}
             onAdd={(p) => void addItem(p.id, p.name)}
           />
         ))}

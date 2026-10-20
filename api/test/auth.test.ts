@@ -48,6 +48,12 @@ describe('auth routes', () => {
     expect(res.body.user).not.toHaveProperty('passwordHash');
   });
 
+  it('POST /api/auth/logout requires a token', async () => {
+    const res = await request(testApp()).post('/api/auth/logout');
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('unauthorized');
+  });
+
   it('POST /api/auth/logout invalidates the token', async () => {
     const app = testApp();
     const token = await loginAs(app);
