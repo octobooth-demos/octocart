@@ -29,5 +29,4 @@ applyTo: 'api/src/**/*.ts'
 
 ## Tests
 
-- Every new or changed route needs tests in `api/test/<router>.test.ts`; new helpers in `lib/`
-  need unit tests in `api/test/<helper>.test.ts`.
+- New helpers in `lib/` need unit tests in `api/test/<helper>.test.ts`.
