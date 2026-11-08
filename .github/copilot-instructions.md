@@ -6,15 +6,15 @@ changes small, readable, and consistent with the house rules below.
 
 ## House rules (apply to every change)
 
-1. **Money is integer cents.** All prices and totals use the `Money` type from
-   `api/src/lib/money.ts` and its helpers (`money`, `fromDollars`, `add`, `subtract`, `multiply`,
-   `sum`, `percentOf`). Never use floats, `parseFloat`, `toFixed`, or `* 100` / `/ 100` to do
-   currency math. The only place cents are divided by 100 is `formatMoney`.
+1. **Money is integer cents.** All prices and totals use their workspace's `Money` type from
+   `api/src/lib/money.ts` or `web/src/lib/money.ts`. API currency math uses the helpers (`money`,
+   `fromDollars`, `add`, `subtract`, `multiply`, `sum`, `percentOf`). Never use floats, `parseFloat`,
+   or `toFixed` for currency math, or `* 100` / `/ 100` outside the money helpers.
 2. **Every API input is validated with zod.** Routes use the `validate({ body, params, query })`
    middleware from `api/src/lib/validate.ts` with a schema exported from `api/src/schemas.ts`.
    Never read `req.body`, `req.params`, or `req.query` without validating it first.
 3. **Errors go through the error middleware.** Async handlers are wrapped in `asyncHandler`
-   (`api/src/lib/asyncHandler.ts`) and signal failures by throwing an `HttpError` subclass from
+   (`api/src/lib/asyncHandler.ts`) and signal failures by throwing an `HttpError` or a subclass from
    `api/src/lib/errors.ts`. Only `errorHandler` (`api/src/middleware/errorHandler.ts`) writes error
    responses; the shape is always `{ error: { code, message, details? } }`.
 4. **Authenticated routes use `requireAuth`** and read the user with `currentUser(req)`. Users may

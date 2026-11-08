@@ -7,10 +7,9 @@ applyTo: 'api/src/**/*.ts'
 ## Routes (`api/src/routes/*.ts`)
 
 - Each router file exports one `Router` (for example `cartRouter`) mounted in `api/src/app.ts`.
-- Every route that accepts input uses `validate({ body?, params?, query? })` with zod schemas
-  defined in `api/src/schemas.ts`. Export both the schema and its inferred type under the same
+- Export both the schema and its inferred type under the same
   name, then read the parsed value with a cast: `const { id } = req.params as ProductIdParams;`.
-- Every `async` handler is wrapped in `asyncHandler(...)`. Do not write `try/catch` blocks that send
+- Do not write `try/catch` blocks that send
   responses; let errors propagate.
 - Signal failures by throwing `HttpError` or a subclass (`ValidationError`, `UnauthorizedError`,
   `NotFoundError`, `ConflictError`). Never call `res.status(4xx|5xx).json(...)` from a route.
@@ -30,5 +29,4 @@ applyTo: 'api/src/**/*.ts'
 
 ## Tests
 
-- Every new or changed route needs tests in `api/test/<router>.test.ts`; new helpers in `lib/`
-  need unit tests in `api/test/<helper>.test.ts`.
+- New helpers in `lib/` need unit tests in `api/test/<helper>.test.ts`.
