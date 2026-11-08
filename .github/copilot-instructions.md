@@ -14,7 +14,7 @@ changes small, readable, and consistent with the house rules below.
    middleware from `api/src/lib/validate.ts` with a schema exported from `api/src/schemas.ts`.
    Never read `req.body`, `req.params`, or `req.query` without validating it first.
 3. **Errors go through the error middleware.** Async handlers are wrapped in `asyncHandler`
-   (`api/src/lib/asyncHandler.ts`) and signal failures by throwing an `HttpError` subclass from
+   (`api/src/lib/asyncHandler.ts`) and signal failures by throwing an `HttpError` or a subclass from
    `api/src/lib/errors.ts`. Only `errorHandler` (`api/src/middleware/errorHandler.ts`) writes error
    responses; the shape is always `{ error: { code, message, details? } }`.
 4. **Authenticated routes use `requireAuth`** and read the user with `currentUser(req)`. Users may
