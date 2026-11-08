@@ -7,8 +7,7 @@ applyTo: 'api/src/**/*.ts'
 ## Routes (`api/src/routes/*.ts`)
 
 - Each router file exports one `Router` (for example `cartRouter`) mounted in `api/src/app.ts`.
-- Every route that accepts input uses `validate({ body?, params?, query? })` with zod schemas
-  defined in `api/src/schemas.ts`. Export both the schema and its inferred type under the same
+- Export both the schema and its inferred type under the same
   name, then read the parsed value with a cast: `const { id } = req.params as ProductIdParams;`.
 - Every `async` handler is wrapped in `asyncHandler(...)`. Do not write `try/catch` blocks that send
   responses; let errors propagate.
